@@ -1,0 +1,48 @@
+version: '2.1'
+services:
+  db:
+    image: postgres
+    container_name: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    environment: 
+      - POSTGRES_PASSWORD=mypassword
+    networks:
+      - net_b
+  front:
+    container_name: front
+    build: ./frontend
+    restart: always
+    ports:
+      - 80:80
+    networks:
+      - net_f
+  backend:
+    build: .
+    restart: always
+    container_name: backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - POSTGRES_PASSWORD=mypassword
+      - HOST=postgres 
+    ports:
+      - 8000:8000
+    networks:
+      - net_f
+      - net_b
+networks:
+  net_b:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.240.0/24
+  net_f:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.241.0/24
